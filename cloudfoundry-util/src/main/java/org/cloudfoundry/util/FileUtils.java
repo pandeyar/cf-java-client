@@ -20,24 +20,30 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import reactor.core.Exceptions;
 
+import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFileAttributes;
 import java.nio.file.attribute.PosixFilePermission;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.cloudfoundry.util.tuple.TupleUtils.consumer;
+
 /**
- * Utilities for {@link FileSystem}s
+ * Utilities for {@link Path}s
  */
 public final class FileUtils {
+
+    private static final int BUFFER_SIZE = 1024 * 1024;
 
     private static final Integer DEFAULT_PERMISSIONS = 0744;
 
@@ -69,6 +75,52 @@ public final class FileUtils {
     }
 
     /**
+     * Returns a hexadecimal {@link String} representation of the SHA1 digest of a {@link Path}
+     *
+     * @param path the {@link Path} to calculate the SHA1 digest of
+     * @return a hexadecimal represenatation of the SHA1 digest
+     */
+    public static String getSha1(Path path) {
+        try (InputStream in = Files.newInputStream(path)) {
+            MessageDigest messageDigest = MessageDigest.getInstance("SHA1");
+
+            IoUtils.pump(BUFFER_SIZE, buffer -> {
+                try {
+                    return in.read(buffer);
+                } catch (IOException e) {
+                    throw Exceptions.propagate(e);
+                }
+            }, consumer((buffer, length) -> messageDigest.update(buffer, 0, length)));
+
+            return DatatypeConverter.printHexBinary(messageDigest.digest());
+        } catch (IOException | NoSuchAlgorithmException e) {
+            throw Exceptions.propagate(e);
+        }
+    }
+
+    /**
+     * Returns the UNIX file mode as an {@link Integer}.  Note that in many cases you'll need to convert this back to an octal representation ({@link Integer#toOctalString(int)}) to use it as a {@link
+     * String}.
+     *
+     * @param path the {@link Path} to get permissions for
+     * @return an {@link Integer} representation of the UNIX file mode
+     */
+    public static int getUnixMode(Path path) {
+        PosixFileAttributes attributes;
+        try {
+            attributes = Files.readAttributes(path, PosixFileAttributes.class);
+        } catch (IOException e) {
+            throw Exceptions.propagate(e);
+        }
+
+        return Optional.ofNullable(attributes)
+            .map(a -> a.permissions().stream()
+                .map(PERMISSION_MODES::get)
+                .collect(Collectors.summingInt(i -> i)))
+            .orElse(DEFAULT_PERMISSIONS);
+    }
+
+    /**
      * Returns a normalized {@link Path}.  In the case of directories, it returns the {@link Path} as it was passed in.  In the case of files, it returns a {@link Path} representing the root of a
      * filesystem mounted using {@link FileSystems#newFileSystem}.
      *
@@ -81,17 +133,6 @@ public final class FileUtils {
         } catch (IOException e) {
             throw Exceptions.propagate(e);
         }
-    }
-
-    /**
-     * Converts a the contents of a {@link Path} to a {@link InputStream}.  If the {@link Path} is a directory, compresses the full contents of the directory into the stream.  If the {@link Path}
-     * is a file, the contents of the file are examined using {@link FileSystems#newFileSystem} starting at the root.  This allows both exploded and compressed artifacts to be used interchangeably.
-     *
-     * @param path a {@link Path} representing either a compressed <i>or</i> exploded artifact
-     * @return a {@link InputStream} containing the compressed contents of the {@code path}
-     */
-    public static InputStream toInputStream(Path path) {
-        return toInputStream(path, p -> true);
     }
 
     /**
@@ -120,12 +161,15 @@ public final class FileUtils {
         }
     }
 
-    private static int getUnixMode(Path path) throws IOException {
-        return Optional.ofNullable(Files.readAttributes(path, PosixFileAttributes.class))
-            .map(attributes -> attributes.permissions().stream()
-                .map(PERMISSION_MODES::get)
-                .collect(Collectors.summingInt(i -> i)))
-            .orElse(DEFAULT_PERMISSIONS);
+    /**
+     * Converts a the contents of a {@link Path} to a {@link InputStream}.  If the {@link Path} is a directory, compresses the full contents of the directory into the stream.  If the {@link Path}
+     * is a file, the contents of the file are examined using {@link FileSystems#newFileSystem} starting at the root.  This allows both exploded and compressed artifacts to be used interchangeably.
+     *
+     * @param path a {@link Path} representing either a compressed <i>or</i> exploded artifact
+     * @return a {@link InputStream} containing the compressed contents of the {@code path}
+     */
+    public static InputStream toInputStream(Path path) {
+        return toInputStream(path, p -> true);
     }
 
     private static void write(Path root, Path path, ZipArchiveOutputStream out) {

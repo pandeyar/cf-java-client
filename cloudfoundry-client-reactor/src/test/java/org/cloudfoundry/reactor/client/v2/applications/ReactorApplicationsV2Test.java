@@ -1287,12 +1287,12 @@ public final class ReactorApplicationsV2Test {
                 .resource(Resource.builder()
                     .hash("b907173290db6a155949ab4dc9b2d019dea0c901")
                     .path("path/to/content.txt")
-                    .size(123)
+                    .size(123L)
                     .build())
                 .resource(Resource.builder()
                     .hash("ff84f89760317996b9dd180ab996b079f418396f")
                     .path("path/to/code.jar")
-                    .size(123)
+                    .size(123L)
                     .build())
                 .build();
         }

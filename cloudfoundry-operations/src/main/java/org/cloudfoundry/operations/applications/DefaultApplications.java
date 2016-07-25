@@ -56,6 +56,8 @@ import org.cloudfoundry.client.v2.organizations.ListOrganizationSpacesRequest;
 import org.cloudfoundry.client.v2.organizations.ListOrganizationsRequest;
 import org.cloudfoundry.client.v2.organizations.OrganizationResource;
 import org.cloudfoundry.client.v2.privatedomains.PrivateDomainResource;
+import org.cloudfoundry.client.v2.resourcematch.ListMatchingResourcesRequest;
+import org.cloudfoundry.client.v2.resourcematch.Resource;
 import org.cloudfoundry.client.v2.routes.CreateRouteResponse;
 import org.cloudfoundry.client.v2.routes.DeleteRouteRequest;
 import org.cloudfoundry.client.v2.routes.DeleteRouteResponse;
@@ -93,27 +95,33 @@ import org.cloudfoundry.util.OperationUtils;
 import org.cloudfoundry.util.PaginationUtils;
 import org.cloudfoundry.util.ResourceUtils;
 import org.cloudfoundry.util.SortingUtils;
+import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuple6;
 import reactor.util.function.Tuples;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
+import java.util.stream.Stream;
 
 import static org.cloudfoundry.util.DelayUtils.exponentialBackOff;
 import static org.cloudfoundry.util.tuple.TupleUtils.function;
@@ -298,10 +306,11 @@ public final class DefaultApplications implements Applications {
         return this.cloudFoundryClient
             .then(cloudFoundryClient -> Mono.when(
                 Mono.just(cloudFoundryClient),
+                getMatchedResources(cloudFoundryClient, request.getApplication()),
                 this.spaceId,
                 getOptionalStackId(cloudFoundryClient, request.getStack())
             ))
-            .then(function((cloudFoundryClient, spaceId, stackId) -> Mono.when(
+            .then(function((cloudFoundryClient, matchedResources, spaceId, stackId) -> Mono.when(
                 Mono.just(cloudFoundryClient),
                 getApplicationId(cloudFoundryClient, request, spaceId, stackId.orElse(null)),
                 Mono.just(this.pathTransformer.apply(request.getApplication())),
@@ -675,6 +684,49 @@ public final class DefaultApplications implements Applications {
                 .map(Envelope::getLogMessage)
                 .compose(SortingUtils.timespan(LOG_MESSAGE_COMPARATOR, LOG_MESSAGE_TIMESPAN));
         }
+    }
+
+    private static Mono<Set<Path>> getMatchedResources(CloudFoundryClient cloudFoundryClient, Path application) {
+        Stream<Path> paths;
+
+        try {
+            paths = Files.walk(FileUtils.normalize(application));
+        } catch (IOException e) {
+            throw Exceptions.propagate(e);
+        }
+
+        return Flux.fromStream(paths)
+            .filter(Files::isRegularFile)
+            .reduce(new HashMap<String, Path>(), (map, path) -> {
+                map.put(FileUtils.getSha1(path), path);
+                return map;
+            })
+            .then(map -> {
+                ListMatchingResourcesRequest request = map.entrySet().stream()
+                    .reduce(ListMatchingResourcesRequest.builder(), (builder, entry) -> {
+                        try {
+                            return builder
+                                .resource(Resource.builder()
+                                    .hash(entry.getKey())
+                                    .mode(Integer.toOctalString(FileUtils.getUnixMode(entry.getValue())))
+                                    .size(Files.size(entry.getValue()))
+                                    .build());
+                        } catch (IOException e) {
+                            throw Exceptions.propagate(e);
+                        }
+                    }, (builder, builder2) -> builder)
+                    .build();
+
+                return cloudFoundryClient.resourceMatch()
+                    .list(request)
+                    .map(response -> {
+                        response.getResources().stream()
+                            .map(Resource::getHash)
+                            .forEach(map::remove);
+
+                        return new HashSet<>(map.values());
+                    });
+            });
     }
 
     @SuppressWarnings("unchecked")

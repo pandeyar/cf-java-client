@@ -53,7 +53,7 @@ public final class ReactorResourceMatchTest {
             return ListMatchingResourcesResponse.builder()
                 .resource(Resource.builder()
                     .hash("002d760bea1be268e27077412e11a320d0f164d3")
-                    .size(36)
+                    .size(36L)
                     .build())
                 .build();
         }
@@ -63,11 +63,11 @@ public final class ReactorResourceMatchTest {
             return ListMatchingResourcesRequest.builder()
                 .resource(Resource.builder()
                     .hash("002d760bea1be268e27077412e11a320d0f164d3")
-                    .size(36)
+                    .size(36L)
                     .build())
                 .resource(Resource.builder()
                     .hash("a9993e364706816aba3e25717850c26c9cd0d89d")
-                    .size(1)
+                    .size(1L)
                     .build())
                 .build();
         }

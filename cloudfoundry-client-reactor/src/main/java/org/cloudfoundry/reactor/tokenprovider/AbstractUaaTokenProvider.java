@@ -32,7 +32,6 @@ import reactor.core.publisher.Mono;
 import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 abstract class AbstractUaaTokenProvider implements TokenProvider {
 
@@ -42,7 +41,7 @@ abstract class AbstractUaaTokenProvider implements TokenProvider {
 
     private final Object refreshTokenMonitor = new Object();
 
-    private final ConcurrentMap<ConnectionContext, Mono<String>> tokens = new ConcurrentHashMap<>(1);
+    private final Map<ConnectionContext, Mono<String>> tokens = new ConcurrentHashMap<>(1);
 
     private volatile String refreshToken;
 

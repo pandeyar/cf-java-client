@@ -48,5 +48,5 @@ abstract class _Resource {
      */
     @JsonProperty("size")
     @Nullable
-    abstract Integer getSize();
+    abstract Long getSize();
 }

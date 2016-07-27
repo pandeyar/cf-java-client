@@ -697,6 +697,12 @@ public final class DefaultApplications implements Applications {
 
         return Flux.fromStream(paths)
             .filter(Files::isRegularFile)
+            .flatMap(path -> Mono.when(
+                Mono.just(path),
+                Mono.just(Files.size(path))
+            ))
+
+
             .reduce(new HashMap<String, Path>(), (map, path) -> {
                 map.put(FileUtils.getSha1(path), path);
                 return map;

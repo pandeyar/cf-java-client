@@ -38,15 +38,15 @@ public final class ResourceMatchUtils {
     private ResourceMatchUtils() {
     }
 
-    public static Flux<ResourceMetadata> getMatchedResources(CloudFoundryClient cloudFoundryClient, Path application) {
+    public static Mono<List<ResourceMetadata>> getMatchedResources(CloudFoundryClient cloudFoundryClient, Path application) {
         return getResources(application)
             .flatMap(ResourceMatchUtils::getMetadata)
             .collectList()
-            .flatMap(metadata -> Flux.fromIterable(metadata)
+            .then(metadata -> Flux.fromIterable(metadata)
                 .map(ResourceMatchUtils::toResource)
                 .as(ResourceMatchUtils::toListMatchingResourceRequest)
                 .then(request -> getMatchedHashes(cloudFoundryClient, request))
-                .flatMap(matchedHashes -> toMatchedResources(metadata, matchedHashes)));
+                .then(matchedHashes -> toMatchedResources(metadata, matchedHashes)));
     }
 
     private static Mono<String> getHash(Path resource) {
@@ -67,7 +67,7 @@ public final class ResourceMatchUtils {
                 Mono.just(resource),
                 getSize(resource)
             )
-            .map(function(ResourceMetadata::new));
+            .map(function(ResourceMatchUtils::toResourceMetadata));
     }
 
     private static Mono<String> getMode(Path resource) {
@@ -104,36 +104,27 @@ public final class ResourceMatchUtils {
             .collect(Collectors.toSet());
     }
 
-    private static Flux<ResourceMetadata> toMatchedResources(List<ResourceMetadata> metadata, Set<String> matchedHashes) {
+    private static Mono<List<ResourceMetadata>> toMatchedResources(List<ResourceMetadata> metadata, Set<String> matchedHashes) {
         return Flux.fromStream(metadata.stream())
-            .filter(m -> matchedHashes.contains(m.hash));
+            .filter(m -> matchedHashes.contains(m.getHash()))
+            .collectList();
     }
 
     private static Resource toResource(ResourceMetadata metadata) {
         return Resource.builder()
-            .hash(metadata.hash)
-            .mode(metadata.mode)
-            .size(metadata.size)
+            .hash(metadata.getHash())
+            .mode(metadata.getMode())
+            .size(metadata.getSize())
             .build();
     }
 
-    private static final class ResourceMetadata {
-
-        private final String hash;
-
-        private final String mode;
-
-        private final Path resource;
-
-        private final Long size;
-
-        private ResourceMetadata(String hash, String mode, Path resource, Long size) {
-            this.hash = hash;
-            this.mode = mode;
-            this.resource = resource;
-            this.size = size;
-        }
-
+    private static ResourceMetadata toResourceMetadata(String hash, String mode, Path resource, Long size) {
+        return ResourceMetadata.builder()
+            .hash(hash)
+            .mode(mode)
+            .resource(resource)
+            .size(size)
+            .build();
     }
 
 }

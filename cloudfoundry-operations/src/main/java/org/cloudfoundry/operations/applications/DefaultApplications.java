@@ -37,6 +37,7 @@ import org.cloudfoundry.client.v2.applications.GetApplicationResponse;
 import org.cloudfoundry.client.v2.applications.InstanceStatistics;
 import org.cloudfoundry.client.v2.applications.ListApplicationServiceBindingsRequest;
 import org.cloudfoundry.client.v2.applications.RemoveApplicationServiceBindingRequest;
+import org.cloudfoundry.client.v2.applications.Resource;
 import org.cloudfoundry.client.v2.applications.RestageApplicationResponse;
 import org.cloudfoundry.client.v2.applications.Statistics;
 import org.cloudfoundry.client.v2.applications.SummaryApplicationRequest;
@@ -56,8 +57,6 @@ import org.cloudfoundry.client.v2.organizations.ListOrganizationSpacesRequest;
 import org.cloudfoundry.client.v2.organizations.ListOrganizationsRequest;
 import org.cloudfoundry.client.v2.organizations.OrganizationResource;
 import org.cloudfoundry.client.v2.privatedomains.PrivateDomainResource;
-import org.cloudfoundry.client.v2.resourcematch.ListMatchingResourcesRequest;
-import org.cloudfoundry.client.v2.resourcematch.Resource;
 import org.cloudfoundry.client.v2.routes.CreateRouteResponse;
 import org.cloudfoundry.client.v2.routes.DeleteRouteRequest;
 import org.cloudfoundry.client.v2.routes.DeleteRouteResponse;
@@ -93,35 +92,30 @@ import org.cloudfoundry.util.FluentMap;
 import org.cloudfoundry.util.JobUtils;
 import org.cloudfoundry.util.OperationUtils;
 import org.cloudfoundry.util.PaginationUtils;
+import org.cloudfoundry.util.ResourceMatchUtils;
 import org.cloudfoundry.util.ResourceUtils;
 import org.cloudfoundry.util.SortingUtils;
-import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuple6;
 import reactor.util.function.Tuples;
 
-import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
-import java.util.stream.Stream;
 
 import static org.cloudfoundry.util.DelayUtils.exponentialBackOff;
 import static org.cloudfoundry.util.tuple.TupleUtils.function;
@@ -306,19 +300,20 @@ public final class DefaultApplications implements Applications {
         return this.cloudFoundryClient
             .then(cloudFoundryClient -> Mono.when(
                 Mono.just(cloudFoundryClient),
-                getMatchedResources(cloudFoundryClient, request.getApplication()),
+                ResourceMatchUtils.getMatchedResources(cloudFoundryClient, request.getApplication()),
                 this.spaceId,
                 getOptionalStackId(cloudFoundryClient, request.getStack())
             ))
             .then(function((cloudFoundryClient, matchedResources, spaceId, stackId) -> Mono.when(
                 Mono.just(cloudFoundryClient),
-                getApplicationId(cloudFoundryClient, request, spaceId, stackId.orElse(null)),
                 Mono.just(this.pathTransformer.apply(request.getApplication())),
+                getApplicationId(cloudFoundryClient, request, spaceId, stackId.orElse(null)),
+                Mono.<List<Resource>>just(null), // todo resources
                 Mono.just(spaceId)
             )))
-            .then(function((cloudFoundryClient, applicationId, inputStream, spaceId) -> prepareDomainsAndRoutes(cloudFoundryClient, request, applicationId, spaceId, this.randomWords)
-                .then(Mono.just(Tuples.of(cloudFoundryClient, applicationId, inputStream)))))
-            .then(function((cloudFoundryClient, applicationId, inputStream) -> uploadApplicationAndWait(cloudFoundryClient, applicationId, inputStream)
+            .then(function((cloudFoundryClient, application, applicationId, resources, spaceId) -> prepareDomainsAndRoutes(cloudFoundryClient, request, applicationId, spaceId, this.randomWords)
+                .then(Mono.just(Tuples.of(cloudFoundryClient, application, applicationId, resources)))))
+            .then(function((cloudFoundryClient, application, applicationId, resources) -> uploadApplicationAndWait(cloudFoundryClient, application, applicationId, resources)
                 .then(Mono.just(Tuples.of(cloudFoundryClient, applicationId)))))
             .then(function((cloudFoundryClient, applicationId) -> stopApplication(cloudFoundryClient, applicationId)
                 .then(Mono.just(Tuples.of(cloudFoundryClient, applicationId)))))
@@ -684,55 +679,6 @@ public final class DefaultApplications implements Applications {
                 .map(Envelope::getLogMessage)
                 .compose(SortingUtils.timespan(LOG_MESSAGE_COMPARATOR, LOG_MESSAGE_TIMESPAN));
         }
-    }
-
-    private static Mono<Set<Path>> getMatchedResources(CloudFoundryClient cloudFoundryClient, Path application) {
-        Stream<Path> paths;
-
-        try {
-            paths = Files.walk(FileUtils.normalize(application));
-        } catch (IOException e) {
-            throw Exceptions.propagate(e);
-        }
-
-        return Flux.fromStream(paths)
-            .filter(Files::isRegularFile)
-            .flatMap(path -> Mono.when(
-                Mono.just(path),
-                Mono.just(Files.size(path))
-            ))
-
-
-            .reduce(new HashMap<String, Path>(), (map, path) -> {
-                map.put(FileUtils.getSha1(path), path);
-                return map;
-            })
-            .then(map -> {
-                ListMatchingResourcesRequest request = map.entrySet().stream()
-                    .reduce(ListMatchingResourcesRequest.builder(), (builder, entry) -> {
-                        try {
-                            return builder
-                                .resource(Resource.builder()
-                                    .hash(entry.getKey())
-                                    .mode(Integer.toOctalString(FileUtils.getUnixMode(entry.getValue())))
-                                    .size(Files.size(entry.getValue()))
-                                    .build());
-                        } catch (IOException e) {
-                            throw Exceptions.propagate(e);
-                        }
-                    }, (builder, builder2) -> builder)
-                    .build();
-
-                return cloudFoundryClient.resourceMatch()
-                    .list(request)
-                    .map(response -> {
-                        response.getResources().stream()
-                            .map(Resource::getHash)
-                            .forEach(map::remove);
-
-                        return new HashSet<>(map.values());
-                    });
-            });
     }
 
     @SuppressWarnings("unchecked")
@@ -1216,12 +1162,13 @@ public final class DefaultApplications implements Applications {
         return requestUpdateApplication(cloudFoundryClient, applicationId, builder -> builder.state(state));
     }
 
-    private static Mono<UploadApplicationResponse> requestUploadApplication(CloudFoundryClient cloudFoundryClient, String applicationId, InputStream application) {
+    private static Mono<UploadApplicationResponse> requestUploadApplication(CloudFoundryClient cloudFoundryClient, InputStream application, String applicationId, List<Resource> resources) {
         return cloudFoundryClient.applicationsV2()
             .upload(UploadApplicationRequest.builder()
+                .application(application)
                 .applicationId(applicationId)
                 .async(true)
-                .application(application)
+                .resources(resources)
                 .build());
     }
 
@@ -1378,8 +1325,8 @@ public final class DefaultApplications implements Applications {
             .collectList();
     }
 
-    private static Mono<Void> uploadApplicationAndWait(CloudFoundryClient cloudFoundryClient, String applicationId, InputStream application) {
-        return requestUploadApplication(cloudFoundryClient, applicationId, application)
+    private static Mono<Void> uploadApplicationAndWait(CloudFoundryClient cloudFoundryClient, InputStream application, String applicationId, List<Resource> resources) {
+        return requestUploadApplication(cloudFoundryClient, application, applicationId, resources)
             .then(job -> JobUtils.waitForCompletion(cloudFoundryClient, job));
     }
 

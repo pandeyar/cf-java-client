@@ -23,6 +23,7 @@ import org.cloudfoundry.operations.DefaultCloudFoundryOperations;
 import org.cloudfoundry.operations.applications.PushApplicationRequest;
 import org.cloudfoundry.reactor.ConnectionContext;
 import org.cloudfoundry.reactor.DefaultConnectionContext;
+import org.cloudfoundry.reactor.ProxyConfiguration;
 import org.cloudfoundry.reactor.TokenProvider;
 import org.cloudfoundry.reactor.client.ReactorCloudFoundryClient;
 import org.cloudfoundry.reactor.doppler.ReactorDopplerClient;
@@ -36,17 +37,19 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
 
 import java.nio.file.Paths;
+import java.util.concurrent.CountDownLatch;
 
 @Configuration
 @EnableAutoConfiguration
 public class ResourceMatching {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         new SpringApplicationBuilder(ResourceMatching.class)
             .web(false)
             .run(args)
             .getBean(Runner.class)
-            .run();
+            .run()
+            .await();
     }
 
     @Bean(initMethod = "checkCompatibility")
@@ -70,7 +73,11 @@ public class ResourceMatching {
     @Bean
     DefaultConnectionContext connectionContext() {
         return DefaultConnectionContext.builder()
-            .apiHost("api.run.pivotal.io")
+            .apiHost("api.local.pcfdev.io")
+            .proxyConfiguration(ProxyConfiguration.builder()
+                .host("localhost")
+                .port(8080)
+                .build())
             .skipSslValidation(true)
             .build();
     }
@@ -97,7 +104,9 @@ public class ResourceMatching {
         @Autowired
         private CloudFoundryOperations cloudFoundryOperations;
 
-        private void run() {
+        private CountDownLatch run() {
+            CountDownLatch latch = new CountDownLatch(1);
+
             this.cloudFoundryOperations.applications()
                 .push(PushApplicationRequest.builder()
                     .application(Paths.get("/Users/bhale/dev/sources/java-test-applications/java-main-application/build/libs/java-main-application-1.0.0.BUILD-SNAPSHOT.jar"))
@@ -106,8 +115,10 @@ public class ResourceMatching {
                     .build())
                 .subscribe(System.out::println, t -> {
                     t.printStackTrace();
-                    System.exit(1);
-                }, () -> System.exit(0));
+                    latch.countDown();
+                }, latch::countDown);
+
+            return latch;
         }
 
     }

@@ -93,6 +93,7 @@ import org.cloudfoundry.util.JobUtils;
 import org.cloudfoundry.util.OperationUtils;
 import org.cloudfoundry.util.PaginationUtils;
 import org.cloudfoundry.util.ResourceMatchUtils;
+import org.cloudfoundry.util.ResourceMetadata;
 import org.cloudfoundry.util.ResourceUtils;
 import org.cloudfoundry.util.SortingUtils;
 import reactor.core.publisher.Flux;
@@ -308,7 +309,7 @@ public final class DefaultApplications implements Applications {
                 Mono.just(cloudFoundryClient),
                 Mono.just(this.pathTransformer.apply(request.getApplication())),
                 getApplicationId(cloudFoundryClient, request, spaceId, stackId.orElse(null)),
-                Mono.<List<Resource>>just(null), // todo resources
+                toResource(matchedResources, request.getApplication()),
                 Mono.just(spaceId)
             )))
             .then(function((cloudFoundryClient, application, applicationId, resources, spaceId) -> prepareDomainsAndRoutes(cloudFoundryClient, request, applicationId, spaceId, this.randomWords)
@@ -1356,6 +1357,19 @@ public final class DefaultApplications implements Applications {
             .otherwiseIfEmpty(ExceptionUtils.illegalState("Application %s failed during staging", application))
             .otherwise(DelayTimeoutException.class, t -> ExceptionUtils.illegalState("Application %s timed out during staging", application))
             .then();
+    }
+
+    private Mono<List<Resource>> toResource(List<ResourceMetadata> matchedResources, Path root) {
+        Path normalizedRoot = FileUtils.normalize(root);
+
+        return Flux.fromIterable(matchedResources)
+            .map(metadata -> Resource.builder()
+                .hash(metadata.getHash())
+                .mode(metadata.getMode())
+                .path(FileUtils.getRelativePathName(normalizedRoot, metadata.getResource()))
+                .size(metadata.getSize())
+                .build())
+            .collectList();
     }
 
 }

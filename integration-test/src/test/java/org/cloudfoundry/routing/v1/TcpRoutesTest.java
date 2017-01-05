@@ -26,6 +26,7 @@ import org.cloudfoundry.routing.v1.routergroups.RouterGroup;
 import org.cloudfoundry.routing.v1.tcproutes.CreateTcpRoutesRequest;
 import org.cloudfoundry.routing.v1.tcproutes.CreateTcpRoutesResponse;
 import org.cloudfoundry.routing.v1.tcproutes.DeleteTcpRoutesRequest;
+import org.cloudfoundry.routing.v1.tcproutes.EventsRequest;
 import org.cloudfoundry.routing.v1.tcproutes.ListTcpRoutesRequest;
 import org.cloudfoundry.routing.v1.tcproutes.ListTcpRoutesResponse;
 import org.cloudfoundry.routing.v1.tcproutes.TcpRoute;
@@ -33,9 +34,11 @@ import org.cloudfoundry.routing.v1.tcproutes.TcpRouteConfiguration;
 import org.cloudfoundry.routing.v1.tcproutes.TcpRouteDeletion;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.util.concurrent.TimeoutException;
 
@@ -106,6 +109,33 @@ public final class TcpRoutesTest extends AbstractIntegrationTest {
             .as(StepVerifier::create)
             .expectComplete()
             .verify(Duration.ofMinutes(5));
+    }
+
+    @Test
+    public void events() throws IOException {  // TODO: Remove Exception
+
+        Mono.when(
+            this.routingClient.tcpRoutes()
+                .events(EventsRequest.builder()
+                    .build())
+                .then(),
+            getRouterGroupId(this.routingClient, DEFAULT_ROUTER_GROUP)
+                .flatMap(routerGroupId -> Flux.interval(Duration.ofSeconds(1))
+                    .flatMap(i -> this.routingClient.tcpRoutes()
+                        .create(CreateTcpRoutesRequest.builder()
+                            .tcpRoute(TcpRouteConfiguration.builder()
+                                .backendIp(this.nameFactory.getIpAddress())
+                                .backendPort(this.nameFactory.getPort())
+                                .port(this.nameFactory.getPort())
+                                .routerGroupId(routerGroupId)
+                                .ttl(59)
+                                .build())
+                            .build())))
+                .then()
+        )
+            .as(StepVerifier::create)
+            .expectComplete()
+            .verify(Duration.ofHours(5));  // TODO: Change back to minutes
     }
 
     @Test

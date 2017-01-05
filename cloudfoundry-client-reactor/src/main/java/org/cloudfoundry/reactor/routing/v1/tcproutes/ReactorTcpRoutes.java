@@ -19,12 +19,15 @@ package org.cloudfoundry.reactor.routing.v1.tcproutes;
 import org.cloudfoundry.reactor.ConnectionContext;
 import org.cloudfoundry.reactor.TokenProvider;
 import org.cloudfoundry.reactor.routing.v1.AbstractRoutingV1Operations;
+import org.cloudfoundry.reactor.util.EventStreamDecoderChannelHandler;
 import org.cloudfoundry.routing.v1.tcproutes.CreateTcpRoutesRequest;
 import org.cloudfoundry.routing.v1.tcproutes.CreateTcpRoutesResponse;
 import org.cloudfoundry.routing.v1.tcproutes.DeleteTcpRoutesRequest;
+import org.cloudfoundry.routing.v1.tcproutes.EventsRequest;
 import org.cloudfoundry.routing.v1.tcproutes.ListTcpRoutesRequest;
 import org.cloudfoundry.routing.v1.tcproutes.ListTcpRoutesResponse;
 import org.cloudfoundry.routing.v1.tcproutes.TcpRoutes;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
@@ -51,6 +54,13 @@ public class ReactorTcpRoutes extends AbstractRoutingV1Operations implements Tcp
     @Override
     public Mono<Void> delete(DeleteTcpRoutesRequest request) {
         return post(request, Void.class, builder -> builder.pathSegment("routing", "v1", "tcp_routes", "delete"));
+    }
+
+    @Override
+    public Flux<String> events(EventsRequest request) {
+        return get(builder -> builder.pathSegment("routing", "v1", "tcp_routes", "events"))
+            .flatMap(inbound -> inbound.addHandler(new EventStreamDecoderChannelHandler()).receiveObject())
+            .map(e -> e.toString());
     }
 
     @Override

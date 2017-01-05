@@ -46,7 +46,7 @@ public interface TcpRoutes {
      * @param request the TCP Routes Events request
      * @return the response to the TCP Routes Events request
      */
-    Flux<String> events(EventsRequest request);
+    Flux<TcpRouteEvent> events(EventsRequest request);
 
     /**
      * Makes the <a href="https://github.com/cloudfoundry-incubator/routing-api/blob/master/docs/api_docs.md#list-tcp-routes">List TCP Routes</a> request

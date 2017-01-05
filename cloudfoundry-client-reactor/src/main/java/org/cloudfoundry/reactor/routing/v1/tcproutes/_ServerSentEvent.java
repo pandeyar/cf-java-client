@@ -22,10 +22,8 @@ import org.immutables.value.Value;
 @Value.Immutable
 abstract class _ServerSentEvent {
 
-    @Value.Default
-    String getData() {
-        return "";
-    }
+    @Nullable
+    abstract String getData();
 
     @Nullable
     abstract String getEventType();

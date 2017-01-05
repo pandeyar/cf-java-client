@@ -49,6 +49,32 @@ public final class EventStreamDecoderChannelHandlerTest {
     }
 
     @Test
+    public void colonSpacing() throws Exception {
+        String message = "data:test\n" +
+            "\n" +
+            "data: test\n" +
+            "\n";
+
+        assertRead(message,
+            ServerSentEvent.builder().data("test").build(),
+            ServerSentEvent.builder().data("test").build());
+    }
+
+    @Test
+    public void randomColons() throws Exception {
+        String message = "data\n" +
+            "\n" +
+            "data\n" +
+            "data\n" +
+            "\n" +
+            "data:";
+
+        assertRead(message,
+            ServerSentEvent.builder().data("").build(),
+            ServerSentEvent.builder().data("\n").build());
+    }
+
+    @Test
     public void threeLines() throws Exception {
         String message = "data: YHOO\n" +
             "data: +2\n" +

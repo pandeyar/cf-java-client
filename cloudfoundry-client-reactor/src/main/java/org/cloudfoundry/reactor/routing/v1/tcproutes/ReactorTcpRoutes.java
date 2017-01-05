@@ -22,17 +22,24 @@ import org.cloudfoundry.reactor.routing.v1.AbstractRoutingV1Operations;
 import org.cloudfoundry.routing.v1.tcproutes.CreateTcpRoutesRequest;
 import org.cloudfoundry.routing.v1.tcproutes.CreateTcpRoutesResponse;
 import org.cloudfoundry.routing.v1.tcproutes.DeleteTcpRoutesRequest;
+import org.cloudfoundry.routing.v1.tcproutes.EventType;
 import org.cloudfoundry.routing.v1.tcproutes.EventsRequest;
 import org.cloudfoundry.routing.v1.tcproutes.ListTcpRoutesRequest;
 import org.cloudfoundry.routing.v1.tcproutes.ListTcpRoutesResponse;
+import org.cloudfoundry.routing.v1.tcproutes.TcpRouteEvent;
 import org.cloudfoundry.routing.v1.tcproutes.TcpRoutes;
+import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.io.IOException;
 
 /**
  * The Reactor-based implementation of {@link TcpRoutes}
  */
 public class ReactorTcpRoutes extends AbstractRoutingV1Operations implements TcpRoutes {
+
+    private final ConnectionContext connectionContext;
 
     /**
      * Creates an instance
@@ -43,6 +50,7 @@ public class ReactorTcpRoutes extends AbstractRoutingV1Operations implements Tcp
      */
     public ReactorTcpRoutes(ConnectionContext connectionContext, Mono<String> root, TokenProvider tokenProvider) {
         super(connectionContext, root, tokenProvider);
+        this.connectionContext = connectionContext;
     }
 
     @Override
@@ -56,10 +64,19 @@ public class ReactorTcpRoutes extends AbstractRoutingV1Operations implements Tcp
     }
 
     @Override
-    public Flux<String> events(EventsRequest request) {
+    public Flux<TcpRouteEvent> events(EventsRequest request) {
         return get(builder -> builder.pathSegment("routing", "v1", "tcp_routes", "events"))
             .flatMap(inbound -> inbound.addHandler(new EventStreamDecoderChannelHandler()).receiveObject())
-            .map(e -> e.toString());
+            .cast(ServerSentEvent.class)
+            .map(event -> {
+                try {
+                    return this.connectionContext.getObjectMapper().readValue(event.getData(), TcpRouteEvent.Builder.class)
+                        .eventType(EventType.from(event.getEventType()))
+                        .build();
+                } catch (IOException e) {
+                    throw Exceptions.propagate(e);
+                }
+            });
     }
 
     @Override

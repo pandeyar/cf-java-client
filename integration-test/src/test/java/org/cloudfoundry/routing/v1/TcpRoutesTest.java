@@ -118,6 +118,7 @@ public final class TcpRoutesTest extends AbstractIntegrationTest {
             this.routingClient.tcpRoutes()
                 .events(EventsRequest.builder()
                     .build())
+                .log("stream.events")
                 .then(),
             getRouterGroupId(this.routingClient, DEFAULT_ROUTER_GROUP)
                 .flatMap(routerGroupId -> Flux.interval(Duration.ofSeconds(1))

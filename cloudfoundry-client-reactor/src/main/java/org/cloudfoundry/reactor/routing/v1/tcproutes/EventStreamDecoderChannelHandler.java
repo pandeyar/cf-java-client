@@ -66,6 +66,7 @@ final class EventStreamDecoderChannelHandler extends ChannelInboundHandlerAdapte
 
         ByteBuf byteBuf = ((DefaultHttpContent) message).content();
         this.characters = this.characters != null ? this.characters + byteBuf.toString(UTF8) : byteBuf.toString(UTF8);
+        byteBuf.release();
 
         while (this.position < this.characters.length()) {
             char c = this.characters.charAt(this.position);
@@ -73,6 +74,9 @@ final class EventStreamDecoderChannelHandler extends ChannelInboundHandlerAdapte
             switch (this.stage) {
                 case COLON:
                     colon(c);
+                    break;
+                case COMMENT:
+                    comment(c);
                     break;
                 case CRLF:
                     crlf(context, c);
@@ -112,6 +116,28 @@ final class EventStreamDecoderChannelHandler extends ChannelInboundHandlerAdapte
         }
     }
 
+    private void comment(char c) {
+        if (CRLF[0] == c) {
+            this.nameStartPosition = this.position;
+            this.nameEndPosition = this.position;
+            this.valueStartPosition = this.position;
+            this.valueEndPosition = this.position;
+            this.stage = Stage.CRLF;
+            this.crlfPosition = 1;
+            this.position++;
+        } else if (CRLF[1] == c) {
+            this.nameStartPosition = this.position;
+            this.nameEndPosition = this.position;
+            this.valueStartPosition = this.position;
+            this.valueEndPosition = this.position;
+            this.stage = Stage.CRLF;
+            this.crlfPosition = 2;
+            this.position++;
+        } else {
+            this.position++;
+        }
+    }
+
     private void crlf(ChannelHandlerContext context, char c) {
         if (this.crlfPosition < CRLF.length) {
             if (CRLF[this.crlfPosition] == c) {
@@ -127,7 +153,10 @@ final class EventStreamDecoderChannelHandler extends ChannelInboundHandlerAdapte
 
     private void name(char c) {
         if (this.nameStartPosition == this.position) {
-            if (CRLF[0] == c) {
+            if (COLON[0] == c) {
+                this.stage = Stage.COMMENT;
+                this.position++;
+            } else if (CRLF[0] == c) {
                 this.nameEndPosition = this.position;
                 this.valueStartPosition = this.position;
                 this.valueEndPosition = this.position;
@@ -148,6 +177,20 @@ final class EventStreamDecoderChannelHandler extends ChannelInboundHandlerAdapte
             this.nameEndPosition = this.position;
             this.stage = Stage.COLON;
             this.colonPosition = 1;
+            this.position++;
+        } else if (CRLF[0] == c) {
+            this.nameEndPosition = this.position;
+            this.valueStartPosition = this.position;
+            this.valueEndPosition = this.position;
+            this.stage = Stage.CRLF;
+            this.crlfPosition = 1;
+            this.position++;
+        } else if (CRLF[1] == c) {
+            this.nameEndPosition = this.position;
+            this.valueStartPosition = this.position;
+            this.valueEndPosition = this.position;
+            this.stage = Stage.CRLF;
+            this.crlfPosition = 2;
             this.position++;
         } else {
             this.position++;
@@ -180,7 +223,7 @@ final class EventStreamDecoderChannelHandler extends ChannelInboundHandlerAdapte
             } else if ("data".equals(name)) {
                 if (this.event != null) {
                     ServerSentEvent event = this.event.build();
-                    String data = event.getData().isEmpty() ? value : String.format("%s\n%s", event.getData(), value);
+                    String data = event.getData() == null ? value : String.format("%s\n%s", event.getData(), value);
 
                     this.event = ServerSentEvent.builder()
                         .id(event.getId())
@@ -219,6 +262,8 @@ final class EventStreamDecoderChannelHandler extends ChannelInboundHandlerAdapte
     private enum Stage {
 
         COLON,
+
+        COMMENT,
 
         CRLF,
 

@@ -33,18 +33,7 @@ import static org.mockito.Mockito.verify;
 public final class EventStreamDecoderChannelHandlerTest {
 
     @Test
-    public void oneMessageThreeLines() throws Exception {
-        String message = "data: YHOO\n" +
-            "data: +2\n" +
-            "data: 10\n" +
-            "\n";
-
-        assertRead(message,
-            ServerSentEvent.builder().data("YHOO\n+2\n10").build());
-    }
-
-    @Test
-    public void threeMessagesAllData() throws Exception {
+    public void allData() throws Exception {
         String message = "data: This is the first message.\n" +
             "\n" +
             "data: This is the second message, it\n" +
@@ -60,7 +49,38 @@ public final class EventStreamDecoderChannelHandlerTest {
     }
 
     @Test
-    public void threeMessagesWithEvents() throws Exception {
+    public void threeLines() throws Exception {
+        String message = "data: YHOO\n" +
+            "data: +2\n" +
+            "data: 10\n" +
+            "\n";
+
+        assertRead(message,
+            ServerSentEvent.builder().data("YHOO\n+2\n10").build());
+    }
+
+    @Test
+    public void withComment() throws Exception {
+        String message = ": test stream\n" +
+            "\n" +
+            "data: first event\n" +
+            "id: 1\n" +
+            "\n" +
+            "data:second event\n" +
+            "id\n" +
+            "\n" +
+            "data:  third event\n" +
+            "\n";
+
+        assertRead(message,
+            ServerSentEvent.builder().id("1").data("first event").build(),
+            ServerSentEvent.builder().id("").data("second event").build(),
+            ServerSentEvent.builder().data(" third event").build()
+        );
+    }
+
+    @Test
+    public void withEventTypes() throws Exception {
         String message = "event: add\n" +
             "data: 73857293\n" +
             "\n" +

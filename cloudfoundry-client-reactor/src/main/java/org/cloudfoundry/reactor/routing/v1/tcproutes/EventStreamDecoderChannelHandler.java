@@ -20,7 +20,6 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.http.DefaultHttpContent;
-import reactor.util.function.Tuples;
 
 import java.nio.charset.Charset;
 
@@ -39,6 +38,8 @@ final class EventStreamDecoderChannelHandler extends ChannelInboundHandlerAdapte
     private int colonPosition;
 
     private int crlfPosition;
+
+    private ServerSentEvent.Builder event;
 
     private int nameEndPosition;
 
@@ -83,6 +84,10 @@ final class EventStreamDecoderChannelHandler extends ChannelInboundHandlerAdapte
                     value(c);
                     break;
             }
+        }
+
+        if (Stage.CRLF == this.stage) {
+            crlf(context, '\0');
         }
 
         if (Stage.NAME == this.stage) {
@@ -151,18 +156,43 @@ final class EventStreamDecoderChannelHandler extends ChannelInboundHandlerAdapte
 
     private void reset() {
         this.characters = null;
-        this.nameStartPosition = 0;
+        this.event = null;
         this.position = 0;
+        this.nameStartPosition = 0;
+        this.valueEndPosition = 0;
         this.stage = Stage.NAME;
     }
 
     private void send(ChannelHandlerContext context) {
         if (this.nameStartPosition == this.valueEndPosition) {
-            context.fireChannelRead(DELIMITER);
+            if (this.event != null) {
+                context.fireChannelRead(this.event.build());
+                this.event = null;
+            }
         } else {
             String name = this.characters.substring(this.nameStartPosition, this.nameEndPosition);
             String value = this.characters.substring(this.valueStartPosition, this.valueEndPosition);
-            context.fireChannelRead(Tuples.of(name, value));
+
+            if ("id".equals(name)) {
+                this.event = this.event != null ? this.event.id(value) : ServerSentEvent.builder().id(value);
+            } else if ("event".equals(name)) {
+                this.event = this.event != null ? this.event.eventType(value) : ServerSentEvent.builder().eventType(value);
+            } else if ("data".equals(name)) {
+                if (this.event != null) {
+                    ServerSentEvent event = this.event.build();
+                    String data = event.getData().isEmpty() ? value : String.format("%s\n%s", event.getData(), value);
+
+                    this.event = ServerSentEvent.builder()
+                        .id(event.getId())
+                        .eventType(event.getEventType())
+                        .data(data)
+                        .retry(event.getRetry());
+                } else {
+                    this.event = ServerSentEvent.builder().data(value);
+                }
+            } else if ("retry".equals(name)) {
+                this.event = this.event != null ? this.event.retry(Integer.parseInt(value)) : ServerSentEvent.builder().retry(Integer.parseInt(value));
+            }
         }
 
         this.nameStartPosition = this.position;

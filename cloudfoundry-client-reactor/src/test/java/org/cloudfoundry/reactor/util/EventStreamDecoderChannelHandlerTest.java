@@ -58,8 +58,33 @@ public final class EventStreamDecoderChannelHandlerTest {
             Tuples.of("data", "This is the second message, it"),
             Tuples.of("data", "has two lines."),
             EventStreamDecoderChannelHandler.DELIMITER,
-            Tuples.of("data", "This is the third message.")
-        );
+            Tuples.of("data", "This is the third message."));
+    }
+
+    @Test
+    public void threeMessagesWithEvents() throws Exception {
+        String message = "event: add\n" +
+            "data: 73857293\n" +
+            "\n" +
+            "event: remove\n" +
+            "data: 2153\n" +
+            "\n" +
+            "event: add\n" +
+            "data: 113411\n" +
+            "\n";
+
+        this.handler.channelRead(this.context, getMessage(message));
+
+        verify(this.context, times(8)).fireChannelRead(this.captor.capture());
+        assertThat(this.captor.getAllValues()).containsExactly(
+            Tuples.of("event", "add"),
+            Tuples.of("data", "73857293"),
+            EventStreamDecoderChannelHandler.DELIMITER,
+            Tuples.of("event", "remove"),
+            Tuples.of("data", "2153"),
+            EventStreamDecoderChannelHandler.DELIMITER,
+            Tuples.of("event", "add"),
+            Tuples.of("data", "113411"));
     }
 
     private static DefaultHttpContent getMessage(String message) {

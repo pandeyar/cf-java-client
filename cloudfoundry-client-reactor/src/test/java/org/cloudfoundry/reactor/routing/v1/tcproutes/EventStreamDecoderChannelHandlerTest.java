@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-package org.cloudfoundry.reactor.util;
+package org.cloudfoundry.reactor.routing.v1.tcproutes;
 
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.DefaultHttpContent;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import reactor.util.function.Tuples;
 
 import java.nio.charset.Charset;
 
@@ -33,11 +32,16 @@ import static org.mockito.Mockito.verify;
 
 public final class EventStreamDecoderChannelHandlerTest {
 
-    private final ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
+    @Test
+    public void oneMessageThreeLines() throws Exception {
+        String message = "data: YHOO\n" +
+            "data: +2\n" +
+            "data: 10\n" +
+            "\n";
 
-    private final ChannelHandlerContext context = mock(ChannelHandlerContext.class, RETURNS_SMART_NULLS);
-
-    private final EventStreamDecoderChannelHandler handler = new EventStreamDecoderChannelHandler();
+        assertRead(message,
+            ServerSentEvent.builder().data("YHOO\n+2\n10").build());
+    }
 
     @Test
     public void threeMessagesAllData() throws Exception {
@@ -49,16 +53,10 @@ public final class EventStreamDecoderChannelHandlerTest {
             "data: This is the third message.\n" +
             "\n";
 
-        this.handler.channelRead(this.context, getMessage(message));
-
-        verify(this.context, times(6)).fireChannelRead(this.captor.capture());
-        assertThat(this.captor.getAllValues()).containsExactly(
-            Tuples.of("data", "This is the first message."),
-            EventStreamDecoderChannelHandler.DELIMITER,
-            Tuples.of("data", "This is the second message, it"),
-            Tuples.of("data", "has two lines."),
-            EventStreamDecoderChannelHandler.DELIMITER,
-            Tuples.of("data", "This is the third message."));
+        assertRead(message,
+            ServerSentEvent.builder().data("This is the first message.").build(),
+            ServerSentEvent.builder().data("This is the second message, it\nhas two lines.").build(),
+            ServerSentEvent.builder().data("This is the third message.").build());
     }
 
     @Test
@@ -73,22 +71,21 @@ public final class EventStreamDecoderChannelHandlerTest {
             "data: 113411\n" +
             "\n";
 
-        this.handler.channelRead(this.context, getMessage(message));
-
-        verify(this.context, times(8)).fireChannelRead(this.captor.capture());
-        assertThat(this.captor.getAllValues()).containsExactly(
-            Tuples.of("event", "add"),
-            Tuples.of("data", "73857293"),
-            EventStreamDecoderChannelHandler.DELIMITER,
-            Tuples.of("event", "remove"),
-            Tuples.of("data", "2153"),
-            EventStreamDecoderChannelHandler.DELIMITER,
-            Tuples.of("event", "add"),
-            Tuples.of("data", "113411"));
+        assertRead(message,
+            ServerSentEvent.builder().eventType("add").data("73857293").build(),
+            ServerSentEvent.builder().eventType("remove").data("2153").build(),
+            ServerSentEvent.builder().eventType("add").data("113411").build());
     }
 
-    private static DefaultHttpContent getMessage(String message) {
-        return new DefaultHttpContent(Unpooled.copiedBuffer(message.toCharArray(), Charset.defaultCharset()));
+    private void assertRead(String message, ServerSentEvent... expected) throws Exception {
+        ChannelHandlerContext context = mock(ChannelHandlerContext.class, RETURNS_SMART_NULLS);
+        DefaultHttpContent content = new DefaultHttpContent(Unpooled.copiedBuffer(message.toCharArray(), Charset.forName("UTF-8")));
+
+        new EventStreamDecoderChannelHandler().channelRead(context, content);
+
+        ArgumentCaptor<ServerSentEvent> captor = ArgumentCaptor.forClass(ServerSentEvent.class);
+        verify(context, times(expected.length)).fireChannelRead(captor.capture());
+        assertThat(captor.getAllValues()).containsExactly(expected);
     }
 
 }

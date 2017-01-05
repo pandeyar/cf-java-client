@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package org.cloudfoundry.reactor.util;
+package org.cloudfoundry.reactor.routing.v1.tcproutes;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.http.DefaultHttpContent;
@@ -25,15 +24,17 @@ import reactor.util.function.Tuples;
 
 import java.nio.charset.Charset;
 
-public final class EventStreamDecoderChannelHandler extends ChannelInboundHandlerAdapter {
+final class EventStreamDecoderChannelHandler extends ChannelInboundHandlerAdapter {
 
-    public static final String DELIMITER = "DELIMITER";
+    static final String DELIMITER = "DELIMITER";
 
     private static final char[] COLON = new char[]{':', ' '};
 
     private static final char[] CRLF = new char[]{'\r', '\n'};
 
-    private ByteBuf byteBuf;
+    private static final Charset UTF8 = Charset.forName("UTF-8");
+
+    private String characters;
 
     private int colonPosition;
 
@@ -51,7 +52,7 @@ public final class EventStreamDecoderChannelHandler extends ChannelInboundHandle
 
     private int valueStartPosition;
 
-    public EventStreamDecoderChannelHandler() {
+    EventStreamDecoderChannelHandler() {
         reset();
     }
 
@@ -63,10 +64,10 @@ public final class EventStreamDecoderChannelHandler extends ChannelInboundHandle
         }
 
         ByteBuf byteBuf = ((DefaultHttpContent) message).content();
-        this.byteBuf = this.byteBuf != null ? Unpooled.wrappedBuffer(this.byteBuf, byteBuf) : byteBuf;
+        this.characters = this.characters != null ? this.characters + byteBuf.toString(UTF8) : byteBuf.toString(UTF8);
 
-        while (this.position < this.byteBuf.readableBytes()) {
-            char c = getChar();
+        while (this.position < this.characters.length()) {
+            char c = this.characters.charAt(this.position);
 
             switch (this.stage) {
                 case COLON:
@@ -119,10 +120,6 @@ public final class EventStreamDecoderChannelHandler extends ChannelInboundHandle
         }
     }
 
-    private char getChar() {
-        return (char) (this.byteBuf.getByte(this.position) & 0xFF);
-    }
-
     private void name(char c) {
         if (this.nameStartPosition == this.position) {
             if (CRLF[0] == c) {
@@ -153,11 +150,7 @@ public final class EventStreamDecoderChannelHandler extends ChannelInboundHandle
     }
 
     private void reset() {
-        if (this.byteBuf != null) {
-            this.byteBuf.release();
-            this.byteBuf = null;
-        }
-
+        this.characters = null;
         this.nameStartPosition = 0;
         this.position = 0;
         this.stage = Stage.NAME;
@@ -167,8 +160,8 @@ public final class EventStreamDecoderChannelHandler extends ChannelInboundHandle
         if (this.nameStartPosition == this.valueEndPosition) {
             context.fireChannelRead(DELIMITER);
         } else {
-            String name = this.byteBuf.toString(this.nameStartPosition, this.nameEndPosition - this.nameStartPosition, Charset.defaultCharset());
-            String value = this.byteBuf.toString(this.valueStartPosition, this.valueEndPosition - this.valueStartPosition, Charset.defaultCharset());
+            String name = this.characters.substring(this.nameStartPosition, this.nameEndPosition);
+            String value = this.characters.substring(this.valueStartPosition, this.valueEndPosition);
             context.fireChannelRead(Tuples.of(name, value));
         }
 

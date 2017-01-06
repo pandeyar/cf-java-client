@@ -1,0 +1,12 @@
+org.cloudfoundry.operations
+org.cloudfoundry.operations.applications
+org.cloudfoundry.operations.buildpacks
+org.cloudfoundry.operations.domains
+org.cloudfoundry.operations.organizationadmin
+org.cloudfoundry.operations.organizations
+org.cloudfoundry.operations.routes
+org.cloudfoundry.operations.serviceadmin
+org.cloudfoundry.operations.services
+org.cloudfoundry.operations.spaceadmin
+org.cloudfoundry.operations.spaces
+org.cloudfoundry.operations.stacks

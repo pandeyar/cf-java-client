@@ -1,0 +1,305 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!-- NewPage -->
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>EnvironmentVariableGroups (Cloud Foundry Java Client 2.0.5.BUILD-SNAPSHOT API)</title>
+<link rel="stylesheet" type="text/css" href="../../../../../stylesheet.css" title="Style">
+<script type="text/javascript" src="../../../../../script.js"></script>
+</head>
+<body>
+<script type="text/javascript"><!--
+    try {
+        if (location.href.indexOf('is-external=true') == -1) {
+            parent.document.title="EnvironmentVariableGroups (Cloud Foundry Java Client 2.0.5.BUILD-SNAPSHOT API)";
+        }
+    }
+    catch(err) {
+    }
+//-->
+var methods = {"i0":6,"i1":6,"i2":6,"i3":6};
+var tabs = {65535:["t0","All Methods"],2:["t2","Instance Methods"],4:["t3","Abstract Methods"]};
+var altColor = "altColor";
+var rowColor = "rowColor";
+var tableTab = "tableTab";
+var activeTableTab = "activeTableTab";
+</script>
+<noscript>
+<div>JavaScript is disabled on your browser.</div>
+</noscript>
+<!-- ========= START OF TOP NAVBAR ======= -->
+<div class="topNav"><a name="navbar.top">
+<!--   -->
+</a>
+<div class="skipNav"><a href="#skip.navbar.top" title="Skip navigation links">Skip navigation links</a></div>
+<a name="navbar.top.firstrow">
+<!--   -->
+</a>
+<ul class="navList" title="Navigation">
+<li><a href="../../../../../overview-summary.html">Overview</a></li>
+<li><a href="package-summary.html">Package</a></li>
+<li class="navBarCell1Rev">Class</li>
+<li><a href="class-use/EnvironmentVariableGroups.html">Use</a></li>
+<li><a href="package-tree.html">Tree</a></li>
+<li><a href="../../../../../deprecated-list.html">Deprecated</a></li>
+<li><a href="../../../../../index-all.html">Index</a></li>
+<li><a href="../../../../../help-doc.html">Help</a></li>
+</ul>
+</div>
+<div class="subNav">
+<ul class="navList">
+<li>Prev&nbsp;Class</li>
+<li><a href="../../../../../org/cloudfoundry/client/v2/environmentvariablegroups/GetRunningEnvironmentVariablesRequest.html" title="class in org.cloudfoundry.client.v2.environmentvariablegroups"><span class="typeNameLink">Next&nbsp;Class</span></a></li>
+</ul>
+<ul class="navList">
+<li><a href="../../../../../index.html?org/cloudfoundry/client/v2/environmentvariablegroups/EnvironmentVariableGroups.html" target="_top">Frames</a></li>
+<li><a href="EnvironmentVariableGroups.html" target="_top">No&nbsp;Frames</a></li>
+</ul>
+<ul class="navList" id="allclasses_navbar_top">
+<li><a href="../../../../../allclasses-noframe.html">All&nbsp;Classes</a></li>
+</ul>
+<div>
+<script type="text/javascript"><!--
+  allClassesLink = document.getElementById("allclasses_navbar_top");
+  if(window==top) {
+    allClassesLink.style.display = "block";
+  }
+  else {
+    allClassesLink.style.display = "none";
+  }
+  //-->
+</script>
+</div>
+<div>
+<ul class="subNavList">
+<li>Summary:&nbsp;</li>
+<li>Nested&nbsp;|&nbsp;</li>
+<li>Field&nbsp;|&nbsp;</li>
+<li>Constr&nbsp;|&nbsp;</li>
+<li><a href="#method.summary">Method</a></li>
+</ul>
+<ul class="subNavList">
+<li>Detail:&nbsp;</li>
+<li>Field&nbsp;|&nbsp;</li>
+<li>Constr&nbsp;|&nbsp;</li>
+<li><a href="#method.detail">Method</a></li>
+</ul>
+</div>
+<a name="skip.navbar.top">
+<!--   -->
+</a></div>
+<!-- ========= END OF TOP NAVBAR ========= -->
+<!-- ======== START OF CLASS DATA ======== -->
+<div class="header">
+<div class="subTitle">org.cloudfoundry.client.v2.environmentvariablegroups</div>
+<h2 title="Interface EnvironmentVariableGroups" class="title">Interface EnvironmentVariableGroups</h2>
+</div>
+<div class="contentContainer">
+<div class="description">
+<ul class="blockList">
+<li class="blockList">
+<hr>
+<br>
+<pre>public interface <span class="typeNameLabel">EnvironmentVariableGroups</span></pre>
+<div class="block">Main entry point to the Cloud Foundry EnvironmentVariableGroups V2 Client API</div>
+</li>
+</ul>
+</div>
+<div class="summary">
+<ul class="blockList">
+<li class="blockList">
+<!-- ========== METHOD SUMMARY =========== -->
+<ul class="blockList">
+<li class="blockList"><a name="method.summary">
+<!--   -->
+</a>
+<h3>Method Summary</h3>
+<table class="memberSummary" border="0" cellpadding="3" cellspacing="0" summary="Method Summary table, listing methods, and an explanation">
+<caption><span id="t0" class="activeTableTab"><span>All Methods</span><span class="tabEnd">&nbsp;</span></span><span id="t2" class="tableTab"><span><a href="javascript:show(2);">Instance Methods</a></span><span class="tabEnd">&nbsp;</span></span><span id="t3" class="tableTab"><span><a href="javascript:show(4);">Abstract Methods</a></span><span class="tabEnd">&nbsp;</span></span></caption>
+<tr>
+<th class="colFirst" scope="col">Modifier and Type</th>
+<th class="colLast" scope="col">Method and Description</th>
+</tr>
+<tr id="i0" class="altColor">
+<td class="colFirst"><code>reactor.core.publisher.Mono&lt;<a href="../../../../../org/cloudfoundry/client/v2/environmentvariablegroups/GetRunningEnvironmentVariablesResponse.html" title="class in org.cloudfoundry.client.v2.environmentvariablegroups">GetRunningEnvironmentVariablesResponse</a>&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../org/cloudfoundry/client/v2/environmentvariablegroups/EnvironmentVariableGroups.html#getRunningEnvironmentVariables-org.cloudfoundry.client.v2.environmentvariablegroups.GetRunningEnvironmentVariablesRequest-">getRunningEnvironmentVariables</a></span>(<a href="../../../../../org/cloudfoundry/client/v2/environmentvariablegroups/GetRunningEnvironmentVariablesRequest.html" title="class in org.cloudfoundry.client.v2.environmentvariablegroups">GetRunningEnvironmentVariablesRequest</a>&nbsp;request)</code>
+<div class="block">Makes the <a href="apidocs.cloudfoundry.org/latest-release/environment_variable_groups/getting_the_contents_of_the_running_environment_variable_group.html">Get the Running Environment
+ Variables</a> request</div>
+</td>
+</tr>
+<tr id="i1" class="rowColor">
+<td class="colFirst"><code>reactor.core.publisher.Mono&lt;<a href="../../../../../org/cloudfoundry/client/v2/environmentvariablegroups/GetStagingEnvironmentVariablesResponse.html" title="class in org.cloudfoundry.client.v2.environmentvariablegroups">GetStagingEnvironmentVariablesResponse</a>&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../org/cloudfoundry/client/v2/environmentvariablegroups/EnvironmentVariableGroups.html#getStagingEnvironmentVariables-org.cloudfoundry.client.v2.environmentvariablegroups.GetStagingEnvironmentVariablesRequest-">getStagingEnvironmentVariables</a></span>(<a href="../../../../../org/cloudfoundry/client/v2/environmentvariablegroups/GetStagingEnvironmentVariablesRequest.html" title="class in org.cloudfoundry.client.v2.environmentvariablegroups">GetStagingEnvironmentVariablesRequest</a>&nbsp;request)</code>
+<div class="block">Makes the <a href="apidocs.cloudfoundry.org/latest-release/environment_variable_groups/getting_the_contents_of_the_staging_environment_variable_group.html">Get the Staging Environment
+ Variables</a> request</div>
+</td>
+</tr>
+<tr id="i2" class="altColor">
+<td class="colFirst"><code>reactor.core.publisher.Mono&lt;<a href="../../../../../org/cloudfoundry/client/v2/environmentvariablegroups/UpdateRunningEnvironmentVariablesResponse.html" title="class in org.cloudfoundry.client.v2.environmentvariablegroups">UpdateRunningEnvironmentVariablesResponse</a>&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../org/cloudfoundry/client/v2/environmentvariablegroups/EnvironmentVariableGroups.html#updateRunningEnvironmentVariables-org.cloudfoundry.client.v2.environmentvariablegroups.UpdateRunningEnvironmentVariablesRequest-">updateRunningEnvironmentVariables</a></span>(<a href="../../../../../org/cloudfoundry/client/v2/environmentvariablegroups/UpdateRunningEnvironmentVariablesRequest.html" title="class in org.cloudfoundry.client.v2.environmentvariablegroups">UpdateRunningEnvironmentVariablesRequest</a>&nbsp;request)</code>
+<div class="block">Makes the <a href="apidocs.cloudfoundry.org/latest-release/environment_variable_groups/updating_the_contents_of_the_running_environment_variable_group.html">Update the Running Environment
+ Variables</a> request</div>
+</td>
+</tr>
+<tr id="i3" class="rowColor">
+<td class="colFirst"><code>reactor.core.publisher.Mono&lt;<a href="../../../../../org/cloudfoundry/client/v2/environmentvariablegroups/UpdateStagingEnvironmentVariablesResponse.html" title="class in org.cloudfoundry.client.v2.environmentvariablegroups">UpdateStagingEnvironmentVariablesResponse</a>&gt;</code></td>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../../../../org/cloudfoundry/client/v2/environmentvariablegroups/EnvironmentVariableGroups.html#updateStagingEnvironmentVariables-org.cloudfoundry.client.v2.environmentvariablegroups.UpdateStagingEnvironmentVariablesRequest-">updateStagingEnvironmentVariables</a></span>(<a href="../../../../../org/cloudfoundry/client/v2/environmentvariablegroups/UpdateStagingEnvironmentVariablesRequest.html" title="class in org.cloudfoundry.client.v2.environmentvariablegroups">UpdateStagingEnvironmentVariablesRequest</a>&nbsp;request)</code>
+<div class="block">Makes the <a href="apidocs.cloudfoundry.org/latest-releasehttp://apidocs.cloudfoundry.org/latest-release/environment_variable_groups/updating_the_contents_of_the_staging_environment_variable_group.html">Update
+ the Staging Environment Variables</a> request</div>
+</td>
+</tr>
+</table>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="details">
+<ul class="blockList">
+<li class="blockList">
+<!-- ============ METHOD DETAIL ========== -->
+<ul class="blockList">
+<li class="blockList"><a name="method.detail">
+<!--   -->
+</a>
+<h3>Method Detail</h3>
+<a name="getRunningEnvironmentVariables-org.cloudfoundry.client.v2.environmentvariablegroups.GetRunningEnvironmentVariablesRequest-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getRunningEnvironmentVariables</h4>
+<pre>reactor.core.publisher.Mono&lt;<a href="../../../../../org/cloudfoundry/client/v2/environmentvariablegroups/GetRunningEnvironmentVariablesResponse.html" title="class in org.cloudfoundry.client.v2.environmentvariablegroups">GetRunningEnvironmentVariablesResponse</a>&gt;&nbsp;getRunningEnvironmentVariables(<a href="../../../../../org/cloudfoundry/client/v2/environmentvariablegroups/GetRunningEnvironmentVariablesRequest.html" title="class in org.cloudfoundry.client.v2.environmentvariablegroups">GetRunningEnvironmentVariablesRequest</a>&nbsp;request)</pre>
+<div class="block">Makes the <a href="apidocs.cloudfoundry.org/latest-release/environment_variable_groups/getting_the_contents_of_the_running_environment_variable_group.html">Get the Running Environment
+ Variables</a> request</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>request</code> - the Get Running Environment Variables request</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>the response from the Get Running Environment Variables request</dd>
+</dl>
+</li>
+</ul>
+<a name="getStagingEnvironmentVariables-org.cloudfoundry.client.v2.environmentvariablegroups.GetStagingEnvironmentVariablesRequest-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>getStagingEnvironmentVariables</h4>
+<pre>reactor.core.publisher.Mono&lt;<a href="../../../../../org/cloudfoundry/client/v2/environmentvariablegroups/GetStagingEnvironmentVariablesResponse.html" title="class in org.cloudfoundry.client.v2.environmentvariablegroups">GetStagingEnvironmentVariablesResponse</a>&gt;&nbsp;getStagingEnvironmentVariables(<a href="../../../../../org/cloudfoundry/client/v2/environmentvariablegroups/GetStagingEnvironmentVariablesRequest.html" title="class in org.cloudfoundry.client.v2.environmentvariablegroups">GetStagingEnvironmentVariablesRequest</a>&nbsp;request)</pre>
+<div class="block">Makes the <a href="apidocs.cloudfoundry.org/latest-release/environment_variable_groups/getting_the_contents_of_the_staging_environment_variable_group.html">Get the Staging Environment
+ Variables</a> request</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>request</code> - the Get Staging Environment Variables request</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>the response from the Get Staging Environment Variables request</dd>
+</dl>
+</li>
+</ul>
+<a name="updateRunningEnvironmentVariables-org.cloudfoundry.client.v2.environmentvariablegroups.UpdateRunningEnvironmentVariablesRequest-">
+<!--   -->
+</a>
+<ul class="blockList">
+<li class="blockList">
+<h4>updateRunningEnvironmentVariables</h4>
+<pre>reactor.core.publisher.Mono&lt;<a href="../../../../../org/cloudfoundry/client/v2/environmentvariablegroups/UpdateRunningEnvironmentVariablesResponse.html" title="class in org.cloudfoundry.client.v2.environmentvariablegroups">UpdateRunningEnvironmentVariablesResponse</a>&gt;&nbsp;updateRunningEnvironmentVariables(<a href="../../../../../org/cloudfoundry/client/v2/environmentvariablegroups/UpdateRunningEnvironmentVariablesRequest.html" title="class in org.cloudfoundry.client.v2.environmentvariablegroups">UpdateRunningEnvironmentVariablesRequest</a>&nbsp;request)</pre>
+<div class="block">Makes the <a href="apidocs.cloudfoundry.org/latest-release/environment_variable_groups/updating_the_contents_of_the_running_environment_variable_group.html">Update the Running Environment
+ Variables</a> request</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>request</code> - the Update Running Environment Variables request</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>the response from the Update Running Environment Variables request</dd>
+</dl>
+</li>
+</ul>
+<a name="updateStagingEnvironmentVariables-org.cloudfoundry.client.v2.environmentvariablegroups.UpdateStagingEnvironmentVariablesRequest-">
+<!--   -->
+</a>
+<ul class="blockListLast">
+<li class="blockList">
+<h4>updateStagingEnvironmentVariables</h4>
+<pre>reactor.core.publisher.Mono&lt;<a href="../../../../../org/cloudfoundry/client/v2/environmentvariablegroups/UpdateStagingEnvironmentVariablesResponse.html" title="class in org.cloudfoundry.client.v2.environmentvariablegroups">UpdateStagingEnvironmentVariablesResponse</a>&gt;&nbsp;updateStagingEnvironmentVariables(<a href="../../../../../org/cloudfoundry/client/v2/environmentvariablegroups/UpdateStagingEnvironmentVariablesRequest.html" title="class in org.cloudfoundry.client.v2.environmentvariablegroups">UpdateStagingEnvironmentVariablesRequest</a>&nbsp;request)</pre>
+<div class="block">Makes the <a href="apidocs.cloudfoundry.org/latest-releasehttp://apidocs.cloudfoundry.org/latest-release/environment_variable_groups/updating_the_contents_of_the_staging_environment_variable_group.html">Update
+ the Staging Environment Variables</a> request</div>
+<dl>
+<dt><span class="paramLabel">Parameters:</span></dt>
+<dd><code>request</code> - the Update Staging Environment Variables request</dd>
+<dt><span class="returnLabel">Returns:</span></dt>
+<dd>the response from the Update Staging Environment Variables request</dd>
+</dl>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<!-- ========= END OF CLASS DATA ========= -->
+<!-- ======= START OF BOTTOM NAVBAR ====== -->
+<div class="bottomNav"><a name="navbar.bottom">
+<!--   -->
+</a>
+<div class="skipNav"><a href="#skip.navbar.bottom" title="Skip navigation links">Skip navigation links</a></div>
+<a name="navbar.bottom.firstrow">
+<!--   -->
+</a>
+<ul class="navList" title="Navigation">
+<li><a href="../../../../../overview-summary.html">Overview</a></li>
+<li><a href="package-summary.html">Package</a></li>
+<li class="navBarCell1Rev">Class</li>
+<li><a href="class-use/EnvironmentVariableGroups.html">Use</a></li>
+<li><a href="package-tree.html">Tree</a></li>
+<li><a href="../../../../../deprecated-list.html">Deprecated</a></li>
+<li><a href="../../../../../index-all.html">Index</a></li>
+<li><a href="../../../../../help-doc.html">Help</a></li>
+</ul>
+</div>
+<div class="subNav">
+<ul class="navList">
+<li>Prev&nbsp;Class</li>
+<li><a href="../../../../../org/cloudfoundry/client/v2/environmentvariablegroups/GetRunningEnvironmentVariablesRequest.html" title="class in org.cloudfoundry.client.v2.environmentvariablegroups"><span class="typeNameLink">Next&nbsp;Class</span></a></li>
+</ul>
+<ul class="navList">
+<li><a href="../../../../../index.html?org/cloudfoundry/client/v2/environmentvariablegroups/EnvironmentVariableGroups.html" target="_top">Frames</a></li>
+<li><a href="EnvironmentVariableGroups.html" target="_top">No&nbsp;Frames</a></li>
+</ul>
+<ul class="navList" id="allclasses_navbar_bottom">
+<li><a href="../../../../../allclasses-noframe.html">All&nbsp;Classes</a></li>
+</ul>
+<div>
+<script type="text/javascript"><!--
+  allClassesLink = document.getElementById("allclasses_navbar_bottom");
+  if(window==top) {
+    allClassesLink.style.display = "block";
+  }
+  else {
+    allClassesLink.style.display = "none";
+  }
+  //-->
+</script>
+</div>
+<div>
+<ul class="subNavList">
+<li>Summary:&nbsp;</li>
+<li>Nested&nbsp;|&nbsp;</li>
+<li>Field&nbsp;|&nbsp;</li>
+<li>Constr&nbsp;|&nbsp;</li>
+<li><a href="#method.summary">Method</a></li>
+</ul>
+<ul class="subNavList">
+<li>Detail:&nbsp;</li>
+<li>Field&nbsp;|&nbsp;</li>
+<li>Constr&nbsp;|&nbsp;</li>
+<li><a href="#method.detail">Method</a></li>
+</ul>
+</div>
+<a name="skip.navbar.bottom">
+<!--   -->
+</a></div>
+<!-- ======== END OF BOTTOM NAVBAR ======= -->
+<p class="legalCopy"><small>Copyright &#169; 2016 <a href="http://www.spring.io">Pivotal Software, Inc.</a>. All rights reserved.</small></p>
+</body>
+</html>
